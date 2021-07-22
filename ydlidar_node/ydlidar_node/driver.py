@@ -1,5 +1,6 @@
 import serial
 import threading
+import time
 
 from .logging_rclpy import *
 
@@ -20,6 +21,7 @@ class YDLidar:
             self.port.write(cmd_bytes)
             if read_bytes == 0:
                 return
+            self.port.flush()
             return self.port.read(read_bytes)
     def start_scanning(self):
         self.send_command(b'\xa5\x60')
@@ -60,7 +62,7 @@ class YDLidar:
             cmd1 = b'\xa5\x0b'
             cmd0p1 = b'\xa5\x09'
         while motor_hz_diff >= 0.1:
-            if motor_hz_diff > 1:
+            if motor_hz_diff >= 1:
                 self.send_command(cmd1)
                 motor_hz_diff -= 1
             elif 0 < motor_hz_diff < 1:
@@ -68,9 +70,7 @@ class YDLidar:
                 motor_hz_diff -= 0.1
             else:
                 assert False, "Unreachable code"
-        # Remove cached motor_hz
-        self.motor_hz = None
-        self.get_motor_hz()
+        self.motor_hz = target_hz
         log_info(f"Set motor Hz to {self.get_motor_hz()}")
         if running:
             self.start_scanning()
@@ -81,7 +81,6 @@ class YDLidar:
         self.laser_hz = self.laser_speeds[buf[7]]
         return self.laser_hz
     def set_laser_hz(self, hz):
-        hz = float(hz)
         running = self.running
         if running:
             self.stop_scanning()
@@ -94,8 +93,7 @@ class YDLidar:
                 buf = self.port.read(8)
                 read_hz = buf[7]
         # Remove cached laser_hz
-        self.laser_hz = None
-        self.get_laser_hz()
+        self.laser_hz = hz
         log_info(f"Set laser Hz to {self.get_laser_hz()}")
         if running:
             self.start_scanning()

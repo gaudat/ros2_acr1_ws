@@ -27,10 +27,10 @@ class YDLidarNode(Node):
         log_info(f"Device: {device} {baudrate}")
         self.parser = YDLidarScanParser()
         self.motor_hz = self.lidar.get_motor_hz()
-        self.declare_parameter("motor_hz", self.motor_hz)
+        self.declare_parameter("motor_hz", self.motor_hz, ParameterDescriptor(read_only=True))
         log_info(f"Motor Hz: {self.motor_hz}")
         self.laser_hz = self.lidar.get_laser_hz()
-        self.declare_parameter("laser_hz", self.laser_hz)
+        self.declare_parameter("laser_hz", self.laser_hz, ParameterDescriptor(read_only=True))
         log_info(f"Laser Hz: {self.laser_hz}")
         self.status_interval = 1
         self.last_status = time.time()
@@ -41,12 +41,6 @@ class YDLidarNode(Node):
         self.declare_parameter("msg_frame_id", "map")
         self.msg_frame_id = self.get_parameter("msg_frame_id").get_parameter_value().string_value
     def update_params(self):
-        new_motor_hz = self.get_parameter("motor_hz").get_parameter_value().double_value
-        new_laser_hz = self.get_parameter("laser_hz").get_parameter_value().integer_value
-        if new_motor_hz != self.motor_hz:
-            self.lidar.set_motor_hz(new_motor_hz)
-        if new_laser_hz != self.laser_hz:
-            self.lidar.set_laser_hz(new_laser_hz)
         self.msg_frame_id = self.get_parameter("msg_frame_id").get_parameter_value().string_value
     def spin_once(self):
         if time.time() - self.last_status > self.status_interval:
@@ -86,9 +80,9 @@ class YDLidarNode(Node):
             output2[3] = [x for y in output2[3] for x in y]
             log_debug(f"Points per revolution: {len(output2[3])}")
             log_debug2(f"Gaps: {[b[0] - a[1] for a, b in zip(self.saved_outputs[:-1], self.saved_outputs[1:])]}")
-            if output2[1] < output2[0]:
-                output2[1] += 360
-            output2[2] = (output2[1] - output2[0]) / (len(output2[3]) - 1)
+            # Seems this give more stable scans
+            output2[2] = sum(o[2] for o in self.saved_outputs) / len(self.saved_outputs)
+            output2[1] = output2[0] + output2[2] * (len(output2[3]) - 1)
             self.send_msg(output2)
             # Reset flag
             self.parser.new_rev = False
