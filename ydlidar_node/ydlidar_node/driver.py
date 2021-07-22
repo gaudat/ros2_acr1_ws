@@ -80,11 +80,11 @@ class YDLidar:
         buf = self.send_command(b'\xa5\xd1', 8)
         self.laser_hz = self.laser_speeds[buf[7]]
         return self.laser_hz
-    def set_laser_hz(self, hz):
+    def set_laser_hz(self, target_hz):
         running = self.running
         if running:
             self.stop_scanning()
-        hz = self.laser_speeds.index(hz)
+        hz = self.laser_speeds.index(target_hz)
         with self.port_lock:
             self.port.flush()
             read_hz = -1
@@ -93,7 +93,7 @@ class YDLidar:
                 buf = self.port.read(8)
                 read_hz = buf[7]
         # Remove cached laser_hz
-        self.laser_hz = hz
+        self.laser_hz = target_hz
         log_info(f"Set laser Hz to {self.get_laser_hz()}")
         if running:
             self.start_scanning()
