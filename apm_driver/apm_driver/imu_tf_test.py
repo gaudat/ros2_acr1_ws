@@ -1,6 +1,7 @@
 import sys
 
 from geometry_msgs.msg import TransformStamped
+from std_msgs.msg import String
 
 import rclpy
 from rclpy.node import Node
@@ -14,19 +15,7 @@ import struct
 import time
 import math
 
-def cobs_decode(buf):
-    out = bytearray()
-    if len(buf) == 0:
-        return out
-    in_ptr = 0
-    while in_ptr < (len(buf) - 1):
-        out += b'\x00'
-        frame_len = buf[in_ptr]
-        out += buf[in_ptr+1:][:frame_len-1]
-        in_ptr += frame_len
-    if buf[0] != 1:
-        out = out[1:]
-    return out
+from .cobs import cobs_encode, cobs_decode
 
 class StaticFramePublisher(Node):
     """
@@ -45,15 +34,9 @@ class StaticFramePublisher(Node):
         self.declare_parameter('parent_frame', 'map')
         self.declare_parameter('child_frame', 'base')
 
-        self.declare_parameter('apm_port', '/dev/ttyACM0')
-        self.port = self.get_parameter('apm_port').get_parameter_value().string_value
-        
-        self.port = serial.Serial(self.port, 115200, timeout = 1)
-        
-        
+        self.sub = self.create_subscription(String, "imu_packets", self.loop, 10)
+
         self.br = TransformBroadcaster(self)
-        
-        self.timer = self.create_timer(0.01, self.loop)
         
         self.gyro_zero_loops = 100
         self.gyro_zero_loops_done = 0
@@ -73,20 +56,8 @@ class StaticFramePublisher(Node):
         self.gyro_unit = imur_unit
         print("Gyro unit:", self.gyro_unit)
         
-        # Wait for a few seconds to flush
-        port_wait = 5
-        wait_start = time.monotonic()
-        print("Waiting for board to finish resetting")
-        while time.monotonic() - wait_start < port_wait:
-            self.port.flushInput()
-            time.sleep(0.1)
-        
-        
-        print("Setup done")
-        
-    def get_imu_reading(self):
-        buf = self.port.read_until(b'\x00')
-        buf = cobs_decode(buf)
+    def get_imu_reading(self, buf):
+        buf = cobs_decode(buf.encode("cp437"))
         if len(buf) != 12:
             return None
         imur = struct.unpack("<hhhhhh", buf)
@@ -109,8 +80,8 @@ class StaticFramePublisher(Node):
         imur[5] -= (self.gyro_offsets[2] / self.gyro_zero_loops_done)
         return imur
     
-    def loop(self):
-        imur = self.get_imu_reading()
+    def loop(self, msg):
+        imur = self.get_imu_reading(msg.data)
         if imur is None:
             return
         
