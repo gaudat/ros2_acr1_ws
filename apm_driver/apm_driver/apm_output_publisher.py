@@ -7,6 +7,7 @@ from .cobs import cobs_encode, cobs_decode
 
 import struct
 import time
+import math
 
 class APMOutputPublisher(Node):
     def __init__(self):
@@ -22,7 +23,8 @@ class APMOutputPublisher(Node):
 
     def test(self):
         if time.monotonic() - self.start < 6:
-            output = 1000 + (time.monotonic() - self.start) * 500
+            output = 1500 + math.sin((time.monotonic() - self.start) * math.pi) * 100
+            
             output = int(output)
             self.logger.info(f"Output {output}")
             buf = struct.pack("<h", output) * 8
