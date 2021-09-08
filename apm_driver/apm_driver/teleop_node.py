@@ -30,11 +30,13 @@ class TeleopNode(Node):
         
         sw_l = outputs[4]
         sw_r = outputs[5]
-        
+            
+        reverse = False
+
         if sw_l > 1700:
-            # Left switch down = Quit
-            exit()
-        if sw_l > 1200:
+            # Left switch down = Reverse
+            reverse = True
+        if sw_l > 1200 and sw_l < 1700:
             # Left switch center = Gated
             return
         # Left switch up = Normal
@@ -42,12 +44,15 @@ class TeleopNode(Node):
         # Right switch center = Stop
         outputs = [1500] * 8
         
-        if sw_r < 1200:
-            # Right switch up = Auto forward
-            outputs[1] = 1450 # Right forward
-            outputs[2] = 1600 # Left forward
+        out_left_mul = 0.7
+        out_right = 75
+
         if sw_r > 1700:
-            # Right switch down = Manual
+            # Right switch down = Auto forward
+            outputs[1] = 1500 - (out_right * out_left_mul * (-1 if reverse else 1)) # Right forward
+            outputs[2] = 1500 + (out_right * (-1 if reverse else 1)) # Left forward
+        if sw_r < 1200:
+            # Right switch up = Manual
             outputs[2] = (left_y - 1500) * 200 / 500 + 1500
             outputs[1] = (right_y - 1500) * (-200) / 500 + 1500
         
