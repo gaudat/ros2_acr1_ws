@@ -54,7 +54,7 @@ class StaticFramePublisher(Node):
         imur_unit /= 180 # Degree to radian
         
         self.gyro_unit = imur_unit
-        print("Gyro unit:", self.gyro_unit)
+        self.logger.info(f"Gyro unit: {self.gyro_unit}")
         
     def get_imu_reading(self, buf):
         buf = cobs_decode(buf.encode("cp437"))
@@ -93,6 +93,8 @@ class StaticFramePublisher(Node):
         
         t = TransformStamped()
                 
+        t.header.stamp = self.get_clock().now().to_msg()
+
         t.header.frame_id = self.get_parameter('parent_frame').get_parameter_value().string_value
         t.child_frame_id = self.get_parameter('child_frame').get_parameter_value().string_value
         
@@ -113,12 +115,6 @@ class StaticFramePublisher(Node):
         t.transform.rotation.w = q_out[3]
         
         self.q_saved = q_out
-        
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.stamp.nanosec += 10000000
-        if t.header.stamp.nanosec > 999999999:
-            t.header.stamp.nanosec -= 100000000
-            t.header.stamp.sec += 1
         
         self.br.sendTransform(t)
 

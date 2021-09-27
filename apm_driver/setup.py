@@ -20,7 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "imu_tf_test = apm_driver.imu_tf_test:main"
+            "imu_tf_test = apm_driver.imu_tf_test:main",
+            "apm_serial_node = apm_driver.apm_serial_node:main",
+            "teleop_node = apm_driver.teleop_node:main"
         ],
     },
 )

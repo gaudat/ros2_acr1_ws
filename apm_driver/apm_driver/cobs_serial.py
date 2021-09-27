@@ -27,12 +27,13 @@ def cobs_decode(buf):
 
 class COBSSerial:
     def __init__(self, port):
-        self.port = serial.Serial(None, 115200, timeout=1)
+        self.port = serial.Serial(None, 115200, timeout=0)
         self.port.port = port
         self.subscribers = {}
         self.port_lock = threading.RLock()
         self.read_thread = None
         self.stop = False
+        self.read_buf = bytearray()
     def begin(self):
         self.port.open()
         time.sleep(0.1)
@@ -49,12 +50,21 @@ class COBSSerial:
         self.port.close()
     def get_packet(self):
         with self.port_lock:
-            buf = self.port.read_until(b'\x00')
-        buf = cobs_decode(buf)
-        return buf[1:]
+            buf = self.port.read(64)
+            self.read_buf += buf
+        if 0 in self.read_buf:
+            sep = self.read_buf.find(0)
+            buf = self.read_buf[:sep]
+            self.read_buf = self.read_buf[sep+1:]
+            buf = cobs_decode(buf)
+            return buf[1:]
+        else:
+            return None
     def read_thread_fun(self):
         while not self.stop:
             buf = self.get_packet()
+            if buf is None:
+                continue
             tag = buf[:3].decode("cp437")
             if tag in self.subscribers:
                 if "__iter__" not in dir(self.subscribers[tag]):
@@ -67,4 +77,4 @@ class COBSSerial:
         buf = cobs_encode(payload_bytes)
         with self.port_lock:
             self.port.write(buf)
-            self.port.flush()
+            #self.port.flush()
