@@ -16,6 +16,8 @@ echo 'Check USB connection and restart computer'
 exit -1
 fi
 
+python3 -m apm_driver.imu_tf_test &
+
 echo 'Running remote control node...'
 
 python3 -m apm_driver.teleop_node &
@@ -25,7 +27,6 @@ echo 'Check if the power switch is on'
 
 while ! /home/pren/check_power.sh
 do sleep 5s
-echo 'Charging'
 done
 
 # Kill all nodes
