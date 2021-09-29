@@ -41,6 +41,7 @@ class StaticFramePublisher(Node):
         self.gyro_zero_loops = 100
         self.gyro_zero_loops_done = 0
         self.gyro_offsets = [0, 0, 0]
+        self.gyro_baseline_buf = []
         
         self.q_saved = tf_transformations.quaternion_from_euler(0, 0, 0)
         self.q_zero = tf_transformations.quaternion_from_euler(0, 0, 0)
@@ -67,7 +68,6 @@ class StaticFramePublisher(Node):
         self.gyro_offsets[0] += imur[3]
         self.gyro_offsets[1] += imur[4]
         self.gyro_offsets[2] += imur[5]
-        self.gyro_zero_loops -= 1
         self.gyro_zero_loops_done += 1
     
     def remove_imu_offset(self, imur):
@@ -78,6 +78,24 @@ class StaticFramePublisher(Node):
         imur[3] -= (self.gyro_offsets[0] / self.gyro_zero_loops_done)
         imur[4] -= (self.gyro_offsets[1] / self.gyro_zero_loops_done)
         imur[5] -= (self.gyro_offsets[2] / self.gyro_zero_loops_done)
+
+        gyro_baseline_max_diff = 0.1 # Around 0.5 degree 
+
+        for i in range(3):
+            if abs(imur[3+i]) < gyro_baseline_max_diff:
+                self.gyro_offsets[i] *= (1 - 1 / self.gyro_zero_loops_done)
+                self.gyro_offsets[i] -= imur[3+i] * 1 / self.gyro_zero_loops_done
+
+        gyro_baseline_buf_size = 100
+        if len(self.gyro_baseline_buf) < gyro_baseline_buf_size:
+            self.gyro_baseline_buf.append(imur)
+        else:
+            # Calculate if this baseline is added in offset
+            n_bl = len(self.gyro_baseline_buf)
+            bl_avg = [sum(x)/n_bl for x in list(zip(*self.gyro_baseline_buf))]
+            print(bl_avg)
+            self.gyro_baseline_buf = []
+
         return imur
     
     def loop(self, msg):
@@ -85,7 +103,7 @@ class StaticFramePublisher(Node):
         if imur is None:
             return
         
-        if self.gyro_zero_loops > 0:
+        if self.gyro_zero_loops > self.gyro_zero_loops_done:
             self.gyro_calibrate(imur)
             return
         

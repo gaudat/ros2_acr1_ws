@@ -50,8 +50,6 @@ class TeleopNode(Node):
                     ).transform.rotation
             quat = [quat.x, quat.y, quat.z, quat.w]
         except TransformException as ex:
-            self.get_logger().info(
-                    f'TransformException: {ex}')
             quat = None
 
         if sw_r > 1700:
@@ -94,7 +92,7 @@ class TeleopNode(Node):
             # Right switch down = Auto forward
             if dyaw is not None:
                 yaw_corr = dyaw * yaw_p
-                print(yaw_corr)
+                #print(yaw_corr)
             else:
                 yaw_corr = 0
             outputs[1] = 1500 - (out_right * out_left_mul * (-1 if reverse else 1)) + yaw_corr # Right forward
