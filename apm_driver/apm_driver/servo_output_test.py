@@ -24,7 +24,7 @@ class ServoOutputTestNode(Node):
         self.out_us = out_us
         self.ondone = ondone
         self.logger = rclpy.logging.get_logger("servo_output_test")
-        self.pub = self.create_publisher(String, "packets_to_apm", freq)
+        self.pub = self.create_publisher(String, "packets_to_apm", 10)
         self.loop_timer = self.create_timer(1/freq, self.loop)
         start = self.get_clock().now()
         self.end = start + Duration(seconds=duration)
@@ -44,7 +44,7 @@ class ServoOutputTestNode(Node):
         if self.ch == -1:
             outputs = [self.out_us] * 8
         else:
-            outputs = [0] * 8
+            outputs = [1500] * 8
             outputs[self.ch] = self.out_us
         outputs = [int(o) for o in outputs]
         buf = struct.pack("<hhhhhhhh", *outputs)
