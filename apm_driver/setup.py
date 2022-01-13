@@ -22,7 +22,8 @@ setup(
         'console_scripts': [
             "imu_tf_test = apm_driver.imu_tf_test:main",
             "apm_serial_node = apm_driver.apm_serial_node:main",
-            "teleop_node = apm_driver.teleop_node:main"
+            "teleop_node = apm_driver.teleop_node:main",
+            "servo_output_test = apm_driver.servo_output_test:main"
         ],
     },
 )
