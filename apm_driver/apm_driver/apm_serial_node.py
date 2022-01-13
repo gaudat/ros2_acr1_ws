@@ -7,6 +7,12 @@ from std_msgs.msg import String
 
 import sys
 
+def print_pwr(in_ba):
+    loops = in_ba[3]
+    volts = in_ba[8:12]
+    volts = int.from_bytes(volts, 'little') / loops / 20
+    print('\rBattery: {:02.2f} V'.format(volts),end='')
+
 class APMSerial(Node):
     def __init__(self):
         super().__init__("apm_serial_node")
@@ -30,7 +36,8 @@ class APMSerial(Node):
 
         self.cs.subscribers = {
             "IMU": self.pub_fun,
-            "PPM": self.pub_fun
+            "PPM": self.pub_fun,
+            "PWR": print_pwr
         }
 
         self.sub = self.create_subscription(String, "packets_to_apm", self.write_packet, 10)
