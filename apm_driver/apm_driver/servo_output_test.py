@@ -15,10 +15,11 @@ class ServoOutputTestNode(Node):
         ch, out_us, duration, freq = config
         if duration is None:
             # Default for duration
-            duration = 1
+            duration = 10 
         if freq is None:
             # Default for freq
-            freq = 10
+            # Make each pulse period 20 ms long
+            freq = 50
         super().__init__("servo_output_test")
         self.ch = ch
         self.out_us = out_us
