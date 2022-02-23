@@ -23,15 +23,3 @@ echo 'Running remote control node...'
 python3 -m apm_driver.teleop_node &
 
 echo 'Ready'
-echo 'Check if the power switch is on'
-
-while ! /home/pren/check_power.sh
-do sleep 5s
-done
-
-# Kill all nodes
-jobs -p | xargs kill
-
-echo 'End'
-
-sudo poweroff
