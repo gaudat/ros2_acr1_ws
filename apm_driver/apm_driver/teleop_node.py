@@ -95,12 +95,12 @@ class TeleopNode(Node):
                 #print(yaw_corr)
             else:
                 yaw_corr = 0
-            outputs[1] = 1500 - (out_right * out_left_mul * (-1 if reverse else 1)) + yaw_corr # Right forward
-            outputs[2] = 1500 + (out_right * (-1 if reverse else 1)) + yaw_corr # Left forward
+            outputs[1] = 1500 + (out_right * out_left_mul * (-1 if reverse else 1)) + yaw_corr # Right forward
+            outputs[2] = 1500 - (out_right * (-1 if reverse else 1)) + yaw_corr # Left forward
         if sw_r < 1200:
             # Right switch up = Manual
-            outputs[2] = (left_y - 1500) * 200 / 500 + 1500
-            outputs[1] = (right_y - 1500) * (-200) / 500 + 1500
+            outputs[2] = (left_y - 1500) * (-200) / 500 + 1500
+            outputs[1] = (right_y - 1500) * (200) / 500 + 1500
         
         outputs = [int(o) for o in outputs]
         
