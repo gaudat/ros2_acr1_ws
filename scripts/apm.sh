@@ -16,6 +16,8 @@ echo 'Check USB connection and restart computer'
 exit -1
 fi
 
+python3 -m apm_driver.servo_output_test -1
+
 python3 -m apm_driver.imu_tf_test &
 
 echo 'Running remote control node...'
